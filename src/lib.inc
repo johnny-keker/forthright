@@ -1,3 +1,5 @@
+; vim: syntax=nasm
+
 section .text
 
 string_length:
