@@ -136,7 +136,7 @@ cont_read:
     cmp al, 0x20 ; space
     je read_ret
 write_char:
-    cmp al, 0x9 ; tab
+    cmp al, 0xA ; newline
     je read_ret
     cmp al, 0x0 ; end of input
     je read_ret

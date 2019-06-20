@@ -7,7 +7,6 @@ global _start
 %define next_instruction    r15 ; pc
 %define current_word        r14 ; w
 %define call_stack          r13 ; rstack
-%define state               r12
 
 section .bss
 
@@ -15,12 +14,12 @@ resq 1023
 call_stack_head: resq 1
 stack_start_ptr: resq 1
 
+input_buf: resq 1024
 dict: resq 32768
 mem: resq 32768
 
 section .text
 
-%include "src/lib.inc"
 %include "src/words.asm"
 
 section .data
@@ -28,6 +27,8 @@ section .data
 LW: dq _lw
 HERE: dq dict
 MEM: dq mem
+
+state: dq 0
 
 section .text
 
@@ -46,10 +47,9 @@ docol:
   jmp next
 
 prog:
-  dq exec_token_lit, 15, exec_token_lit, 25, exec_token_plus
+  dq exec_token_interpret_initialization
 
 _start:
-  mov state, 1
   mov [stack_start_ptr], rsp
   mov call_stack, call_stack_head
   mov next_instruction, prog
