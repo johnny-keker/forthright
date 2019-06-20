@@ -17,9 +17,18 @@ native "+", plus
   jmp next
 
 native "-", minus
-    pop rax
-    sub [rsp], rax
-    jmp next
+  pop rax
+  sub [rsp], rax
+  jmp next
+
+native "=", equals
+  pop rax
+  pop rdx
+  cmp rax, rdx
+  sete al
+  movzx rax, al
+  push rax
+  jmp next
 
 native "dup", dup
   push qword [rsp]
@@ -95,6 +104,11 @@ native "docol", docol
   mov next_instruction, current_word
   jmp next
 
+native ".", dot
+  pop rdi
+  call print_int
+  jmp next
+
 native "!", write
   pop rax
   pop rdx
@@ -110,6 +124,46 @@ native "c@", fetch_char
   pop rax
   movzx rax, byte [rax]
   push rax
+  jmp next
+
+native "not", not
+  pop rax
+  test rax, rax
+  setz al
+  movzx rax, al
+  push rax
+  jmp next
+
+native ",", comma
+  mov rax, [HERE]
+  pop qword [rax]
+  add qword [HERE], 8
+  jmp next
+
+native "create", create
+  mov rcx, [LW]
+  mov rsi, [HERE]
+  mov [rsi], rcx
+  mov [LW], rsi
+  add rsi, 8
+  mov byte [rsi], 0
+  inc rsi
+
+  pop rdi
+  push rsi
+  call string_copy
+  pop rsi
+  push rsi
+  mov rdi, rsi
+  call string_length
+  pop rsi
+  add rsi, rax
+  inc rsi
+  pop rax
+  mov [rsi], al
+  inc rsi
+
+  mov [HERE], rsi
   jmp next
 
 colon "count", count
@@ -165,6 +219,33 @@ native "syscall", syscall
   push rax
   push rdx
   jmp next
+
+
+
+colon ":", colon
+  .restart:
+  dq exec_token_inbuf
+  dq exec_token_word
+  zero_branch .restart
+  dq exec_token_lit, 0
+  dq exec_token_inbuf
+  dq exec_token_create
+  dq exec_token_lit, 1
+  dq exec_token_state
+  dq exec_token_write
+  dq exec_token_lit, impl_docol
+  dq exec_token_comma
+  dq exec_token_exit
+
+colon ";", semicolon, 1
+  dq exec_token_lit, 0
+  dq exec_token_state
+  dq exec_token_write
+  dq exec_token_lit
+  dq exec_token_exit
+  dq exec_token_comma
+  dq exec_token_exit
+
 
 native "zero_branch", zero_branch
   pop rax
@@ -276,9 +357,21 @@ colon "main_loop", main_loop
   zero_branch .try_parse_as_number
   dq exec_token_get_exec_token_by_word_header
   
-    ; if compile
-    ; dq xt_state, xt_fetch
-    ; branch0 .inter
+  dq exec_token_state
+  dq exec_token_fetch
+  zero_branch .inter
+
+  dq exec_token_dup
+  dq exec_token_lit, 1
+  dq exec_token_minus
+  dq exec_token_fetch_char
+  dq exec_token_not
+  zero_branch .inter
+
+  dq exec_token_swap
+  dq exec_token_drop
+  dq exec_token_comma
+  dq exec_token_exit
 
 .inter:
   dq exec_token_swap
@@ -293,7 +386,36 @@ colon "main_loop", main_loop
   zero_branch .word_not_found
   dq exec_token_swap
   dq exec_token_drop
+  dq exec_token_state
+  dq exec_token_fetch
+  zero_branch .exit
+
+  dq exec_token_here
+  dq exec_token_lit, 8
+  dq exec_token_minus
+  dq exec_token_fetch
+
+  dq exec_token_dup
+  dq exec_token_lit
+  dq exec_token_zero_branch
+  dq exec_token_equals
+  dq exec_token_not
+  zero_branch .is_branch
+
+  dq exec_token_dup
+  dq exec_token_lit
+  dq exec_token_branch
+  dq exec_token_equals
+  dq exec_token_not
+  zero_branch .is_branch
+
+  dq exec_token_lit, exec_token_lit, exec_token_comma
+
+.is_branch:
+  dq exec_token_drop
+  dq exec_token_comma
   dq exec_token_exit
+
 .word_not_found:
   dq exec_token_drop
   dq exec_token_lit
