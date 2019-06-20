@@ -29,6 +29,13 @@ native "=", equals
   push rax
   jmp next
 
+native "*", mul
+  pop rax
+  pop rdx
+  imul rdx
+  push rax
+  jmp next
+
 native "dup", dup
   push qword [rsp]
   jmp next
