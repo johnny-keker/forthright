@@ -5,7 +5,6 @@ in_fd: dq 0
 section .text
 
 %include "src/lib.inc"
-; Pushes a value immediately following this XT
 native "lit", lit
   push qword [next_instruction]
   add next_instruction, 8
@@ -275,17 +274,12 @@ native "get_exec_token_by_word_header", get_exec_token_by_word_header
   push rsi
   jmp next
 
-; Address of the input buffer (is used by interpreter/compiler)
 const inbuf, input_buf
 
-; Address of user memory.
 const mem, mem
 
-; Last word address
 const last_word, LW
 
-; State cell address.
-; The state cell stores either 1 (compilation mode) or 0 (interpretation mode)
 const state, state
 
 const here, [HERE]

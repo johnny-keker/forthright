@@ -4,9 +4,9 @@ global _start
 
 %include "src/dict.asm"
 
-%define next_instruction    r15 ; pc
-%define current_word        r14 ; w
-%define call_stack          r13 ; rstack
+%define next_instruction    r15
+%define current_word        r14
+%define call_stack          r13
 
 section .bss
 
